@@ -178,10 +178,10 @@ namespace WindowsGSM.Plugins
         }
 
 
-        // - Check if the directory contains paper.jar for import
+        // - Check if the directory contains server.jar for import
         public bool IsImportValid(string path)
         {
-            // Check paper.jar exists
+            // Check server.jar exists
             var exePath = Path.Combine(path, StartPath);
             Error = $"Invalid Path! Fail to find {StartPath}";
             return File.Exists(exePath);
