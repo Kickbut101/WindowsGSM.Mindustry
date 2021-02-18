@@ -3,6 +3,7 @@
 
 ## Requirements
 [WindowsGSM](https://github.com/WindowsGSM/WindowsGSM) >= 1.21.0
+Some variant of Java
 
 ## Installation
 1. Move **Mindustry.cs** folder to **plugins** folder
