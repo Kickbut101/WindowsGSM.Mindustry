@@ -43,14 +43,14 @@ namespace WindowsGSM.Plugins
         public string Port = "6567";
         public string QueryPort = "6859";
         public string Defaultmap = "";
-        public string Maxplayers = "";
+        public string Maxplayers = "20";
         public string Additional = "";
 
 
         // - Create a default cfg for the game server after installation
         public async void CreateServerCFG()
         {
-
+            return null;
         }
 
 
