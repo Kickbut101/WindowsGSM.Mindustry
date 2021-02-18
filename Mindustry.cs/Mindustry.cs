@@ -20,7 +20,7 @@ namespace WindowsGSM.Plugins
             author = "Andy",
             description = "WindowsGSM plugin for Mindustry",
             version = "1.0",
-            url = "",
+            url = "https://github.com/Kickbut101/WindowsGSM.Mindustry",
             color = "#800080"
         };
 
