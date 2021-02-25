@@ -4,9 +4,7 @@
 ## Requirements
 [WindowsGSM](https://github.com/WindowsGSM/WindowsGSM) >= 1.21.0
 
-Some variant of java
-
-
+Some variant of Java
 
 ## Installation
 1. Download the Mindustry server.jar - This plugin can only handle importing the server
