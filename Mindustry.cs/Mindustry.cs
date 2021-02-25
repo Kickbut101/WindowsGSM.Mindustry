@@ -158,7 +158,7 @@ namespace WindowsGSM.Plugins
             var build = await GetRemoteBuild(); // "v125.1"
             if (string.IsNullOrWhiteSpace(build)) { return null; }
 
-            // Download the latest paper.jar to /serverfiles
+            // Download the latest server-release.jar to /serverfiles
             try
             {
                 using (var webClient = new WebClient())
@@ -207,7 +207,7 @@ namespace WindowsGSM.Plugins
             }
 
             // Try getting the latest version and build
-            var build = await GetRemoteBuild(); // "1.16.1/133"
+            var build = await GetRemoteBuild(); // "v125.1"
             if (string.IsNullOrWhiteSpace(build)) { return null; }
 
             // Download the latest paper.jar to /serverfiles
@@ -215,7 +215,7 @@ namespace WindowsGSM.Plugins
             {
                 using (var webClient = new WebClient())
                 {
-                    await webClient.DownloadFileTaskAsync($"https://papermc.io/api/v1/paper/{build}/download", ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
+                    await webClient.DownloadFileTaskAsync($"https://github.com/Anuken/Mindustry/releases/download/{build}/server-release.jar", ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
 
                 }
             }
@@ -257,14 +257,16 @@ namespace WindowsGSM.Plugins
         // - Get Local server version
         public string GetLocalBuild()
         {
-            var filePathExact = ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
-
-            // Part 1: create new FileInfo get Length.
-            FileInfo info = new FileInfo(filePathExact);
-            long length = info.Length;
-
-
-            return $"Size of current file in bytes - {length}";
+            // Get local version and build by mindustry_version.txt
+            const string VERSION_TXT_FILE = "mindustry_version.txt"; // should contain something like "v125.1"
+            var versionTxtFile = ServerPath.GetServersServerFiles(_serverData.ServerID, VERSION_TXT_FILE);
+            if (!File.Exists(versionTxtFile))
+            {
+                Error = $"{VERSION_TXT_FILE} does not exist";
+                return string.Empty;
+            }
+            var fileContents = File.ReadAllText(versionTxtFile);
+            return $"{fileContents}";
         }
 
 
