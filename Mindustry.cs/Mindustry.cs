@@ -19,7 +19,7 @@ namespace WindowsGSM.Plugins
             name = "WindowsGSM.Mindustry",
             author = "Andy",
             description = "WindowsGSM plugin for Mindustry",
-            version = "1.0",
+            version = "1.2",
             url = "https://github.com/Kickbut101/WindowsGSM.Mindustry",
             color = "#800080"
         };
@@ -32,19 +32,19 @@ namespace WindowsGSM.Plugins
 
 
         // - Game server Fixed variables
-        public string StartPath = "server.jar";
+        public string StartPath = "server-release.jar";
         public string FullName = "Mindustry";
         public bool AllowsEmbedConsole = true;
         public int PortIncrements = 1;
-        public object QueryMethod = null;
+        public object QueryMethod = new A2S(); // just a guess
 
 
         // - Game server default values
         public string Port = "6567";
         public string QueryPort = "6859";
-        public string Defaultmap = ""; 
-        public string Maxplayers = ""; 
-        public string Additional = "";
+        public string Defaultmap = "NotUsed"; 
+        public string Maxplayers = "10"; 
+        public string Additional = "host";
 
 
         // - Create a default cfg for the game server after installation
@@ -69,7 +69,11 @@ namespace WindowsGSM.Plugins
 
 
             // Prepare start parameter
-            var param = new StringBuilder($"{_serverData.ServerParam} -jar {StartPath}");
+            var param = new StringBuilder($"-jar {StartPath} ");
+            param.Append(string.IsNullOrWhiteSpace(_serverData.ServerPort) ? string.Empty : $"config port {_serverData.ServerPort},");
+            param.Append(string.IsNullOrWhiteSpace(_serverData.ServerQueryPort) ? string.Empty : $"config socketInput true,");
+            param.Append(string.IsNullOrWhiteSpace(_serverData.ServerQueryPort) ? string.Empty : $"config socketInputPort {_serverData.ServerQueryPort},");
+            param.Append(string.IsNullOrWhiteSpace(_serverData.ServerParam) ? string.Empty : $"{_serverData.ServerParam}");
 
             // Prepare Process
             var p = new Process
@@ -100,11 +104,6 @@ namespace WindowsGSM.Plugins
                 try
                 {
                     p.Start();
-                    await Task.Run(() =>
-                        {
-                            p.StandardInput.WriteLine("host");
-                        }
-                    );
                 }
                 catch (Exception e)
                 {
@@ -121,11 +120,6 @@ namespace WindowsGSM.Plugins
             try
             {
                 p.Start();
-                        await Task.Run(() =>
-                        {
-                            ServerConsole.SendMessageToMainWindow(p.MainWindowHandle, "host");
-                        }
-                    );
                 return p;
             }
             catch (Exception e)
@@ -160,13 +154,77 @@ namespace WindowsGSM.Plugins
         // - Install server function
         public async Task<Process> Install()
         {
+            // Try getting the latest version and build
+            var build = await GetRemoteBuild(); // "v125.1"
+            if (string.IsNullOrWhiteSpace(build)) { return null; }
+
+            // Download the latest paper.jar to /serverfiles
+            try
+            {
+                using (var webClient = new WebClient())
+                {
+                    await webClient.DownloadFileTaskAsync($"https://github.com/Anuken/Mindustry/releases/download/{build}/server-release.jar", ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
+                }
+            }
+            catch (Exception e)
+            {
+                Error = e.Message;
+                return null;
+            }
+
+            // Create eula.txt
+            var versionFile = ServerPath.GetServersServerFiles(_serverData.ServerID, "mindustry_version.txt");
+            File.WriteAllText(versionFile, $"{build}");
+
             return null;
         }
+
 
 
         // - Update server function
         public async Task<Process> Update()
         {
+            // Delete the old server.jar
+            var mindustryServerJar = ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
+            if (File.Exists(mindustryServerJar))
+            {
+                if (await Task.Run(() =>
+                {
+                    try
+                    {
+                        File.Delete(mindustryServerJar);
+                        return true;
+                    }
+                    catch (Exception e)
+                    {
+                        Error = e.Message;
+                        return false;
+                    }
+                }))
+                {
+                    return null;
+                }
+            }
+
+            // Try getting the latest version and build
+            var build = await GetRemoteBuild(); // "1.16.1/133"
+            if (string.IsNullOrWhiteSpace(build)) { return null; }
+
+            // Download the latest paper.jar to /serverfiles
+            try
+            {
+                using (var webClient = new WebClient())
+                {
+                    await webClient.DownloadFileTaskAsync($"https://papermc.io/api/v1/paper/{build}/download", ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
+
+                }
+            }
+            catch (Exception e)
+            {
+                Error = e.Message;
+                return null;
+            }
+
             return null;
         }
 
@@ -174,14 +232,22 @@ namespace WindowsGSM.Plugins
         // - Check if the installation is successful
         public bool IsInstallValid()
         {
-            return true;
+            var mindustryServerJar = ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
+            if (File.Exists(mindustryServerJar))
+                {
+                    return true;
+                }
+            else
+                {
+                    return false;
+                }
         }
 
 
         // - Check if the directory contains server.jar for import
         public bool IsImportValid(string path)
         {
-            // Check server.jar exists
+            // Check mindustry-server.jar exists
             var exePath = Path.Combine(path, StartPath);
             Error = $"Invalid Path! Fail to find {StartPath}";
             return File.Exists(exePath);
@@ -191,14 +257,36 @@ namespace WindowsGSM.Plugins
         // - Get Local server version
         public string GetLocalBuild()
         {
-            return "Doesn't work";
+            var filePathExact = ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
+
+            // Part 1: create new FileInfo get Length.
+            FileInfo info = new FileInfo(filePathExact);
+            long length = info.Length;
+
+
+            return $"Size of current file in bytes - {length}";
         }
 
 
+      
         // - Get Latest server version
         public async Task<string> GetRemoteBuild()
         {
-            return "Doesn't work";
+            // Get latest version and build at https://github.com/Anuken/Mindustry/releases - (Using the API of course)
+            try
+            {
+                using (var webClient = new WebClient())
+                {
+                    webClient.Headers.Add("user-agent", "I am WindowsGSM!"); // I was getting 403 Forbidden without this
+                    var version = JObject.Parse(await webClient.DownloadStringTaskAsync("https://api.github.com/repos/Anuken/Mindustry/releases/latest"))["tag_name"].ToString(); // "v125.1"
+                    return $"{version}"; // "v125.1"
+                }
+            }
+            catch
+            {
+                Error = "Fail to get remote version and build";
+                return string.Empty;
+            }
         }
     }
 }
