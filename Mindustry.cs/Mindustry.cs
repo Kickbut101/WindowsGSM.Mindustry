@@ -225,6 +225,11 @@ namespace WindowsGSM.Plugins
                 return null;
             }
 
+
+            // Create file that houses the version last downloaded.
+            var versionFile = ServerPath.GetServersServerFiles(_serverData.ServerID, "mindustry_version.txt");
+            File.WriteAllText(versionFile, $"{build}");
+
             return null;
         }
 
