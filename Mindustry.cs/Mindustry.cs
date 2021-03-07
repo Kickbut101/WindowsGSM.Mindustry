@@ -19,7 +19,7 @@ namespace WindowsGSM.Plugins
             name = "WindowsGSM.Mindustry",
             author = "Andy",
             description = "WindowsGSM plugin for Mindustry",
-            version = "1.2",
+            version = "1.2.1",
             url = "https://github.com/Kickbut101/WindowsGSM.Mindustry",
             color = "#800080"
         };
@@ -200,11 +200,8 @@ namespace WindowsGSM.Plugins
                         Error = e.Message;
                         return false;
                     }
-                }))
-                {
-                    return null;
-                }
-            }
+                }));
+            } 
 
             // Try getting the latest version and build
             var build = await GetRemoteBuild(); // "v125.1"
